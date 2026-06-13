@@ -66,6 +66,18 @@ Seeds: `["vault", owner_pubkey]`
 | `ThresholdNotMet` | `execute_rotation` if `approvals.len() < threshold`. |
 | `BlockedDuringRecovery` | `ping`, `remove_guardian` while `recovery_state == RecoveryPending`. |
 
+## Environment
+
+Devnet deploys use a custom RPC (e.g. [Helius](https://www.helius.dev/)) since the public
+`api.devnet.solana.com` endpoint frequently fails on large program writes with
+`Max retries exceeded`.
+
+Create a `.env` file in this directory (gitignored) with:
+
+```bash
+ANCHOR_PROVIDER_URL=https://devnet.helius-rpc.com/?api-key=<your-api-key>
+```
+
 ## Testing
 
 All tests run against [litesvm](https://github.com/LiteSVM/litesvm), an in-process Solana
@@ -88,3 +100,23 @@ Tests live in `programs/aegis_program/tests/test_aegis.rs` and cover every instr
 path plus all error conditions, including the full guardian recovery flow (initiate → approve →
 execute), owner cancellation, recovery expiry, and guard conditions like
 `BlockedDuringRecovery` and `RecoveryAlreadyActive`.
+
+## Deploying to Devnet
+
+```bash
+solana config set --url devnet
+
+export $(cat .env | xargs)
+
+anchor build
+
+solana program deploy target/deploy/aegis_program.so \
+  --program-id target/deploy/aegis_program-keypair.json \
+  -u "$ANCHOR_PROVIDER_URL"
+```
+
+If a deploy fails partway through, reclaim locked SOL from leftover buffer accounts with:
+
+```bash
+solana program close --buffers -u "$ANCHOR_PROVIDER_URL"
+```

@@ -371,7 +371,7 @@ fn add_guardian_fails_when_signer_is_not_owner() {
     let (mut svm, vault) = setup_vault(program_id, &owner);
     svm.airdrop(&intruder.pubkey(), 1_000_000_000).unwrap();
 
-    const UNAUTHORIZED: u32 = 6004;
+    const UNAUTHORIZED: u32 = 6003;
     let err = add_guardian_result(&mut svm, program_id, &intruder, vault, guardian)
         .expect_err("non-owner should not be able to add a guardian");
     assert_eq!(err, UNAUTHORIZED);
@@ -387,7 +387,7 @@ fn add_guardian_fails_on_duplicate() {
     add_guardian(&mut svm, program_id, &owner, vault, guardian);
     svm.expire_blockhash();
 
-    const DUPLICATE_GUARDIAN: u32 = 6001;
+    const DUPLICATE_GUARDIAN: u32 = 6000;
     let err = add_guardian_result(&mut svm, program_id, &owner, vault, guardian)
         .expect_err("adding a duplicate guardian should fail");
     assert_eq!(err, DUPLICATE_GUARDIAN);
@@ -407,7 +407,7 @@ fn add_guardian_fails_once_max_guardians_reached() {
     let state = get_vault(&svm, &vault);
     assert_eq!(state.guardians.len(), MAX_GUARDIANS);
 
-    const MAX_GUARDIANS_REACHED: u32 = 6002;
+    const MAX_GUARDIANS_REACHED: u32 = 6001;
     let err = add_guardian_result(&mut svm, program_id, &owner, vault, Pubkey::new_unique())
         .expect_err("adding past MAX_GUARDIANS should fail");
     assert_eq!(err, MAX_GUARDIANS_REACHED);
@@ -421,7 +421,7 @@ fn set_threshold_fails_when_zero() {
     let (mut svm, vault) = setup_vault(program_id, &owner);
     add_guardian(&mut svm, program_id, &owner, vault, Pubkey::new_unique());
 
-    const THRESHOLD_TOO_LOW: u32 = 6008;
+    const THRESHOLD_TOO_LOW: u32 = 6007;
     let err = set_threshold_result(&mut svm, program_id, &owner, vault, 0)
         .expect_err("a threshold of zero should fail");
     assert_eq!(err, THRESHOLD_TOO_LOW);
@@ -435,7 +435,7 @@ fn set_threshold_fails_when_exceeding_guardian_count() {
     let (mut svm, vault) = setup_vault(program_id, &owner);
     add_guardian(&mut svm, program_id, &owner, vault, Pubkey::new_unique());
 
-    const THRESHOLD_EXCEEDS_GUARDIANS: u32 = 6007;
+    const THRESHOLD_EXCEEDS_GUARDIANS: u32 = 6006;
     let err = set_threshold_result(&mut svm, program_id, &owner, vault, 2)
         .expect_err("a threshold exceeding the guardian count should fail");
     assert_eq!(err, THRESHOLD_EXCEEDS_GUARDIANS);
@@ -464,7 +464,7 @@ fn remove_guardian_fails_when_not_registered() {
 
     let (mut svm, vault) = setup_vault(program_id, &owner);
 
-    const GUARDIAN_NOT_FOUND: u32 = 6003;
+    const GUARDIAN_NOT_FOUND: u32 = 6002;
     let err = remove_guardian(&mut svm, program_id, &owner, vault, Pubkey::new_unique())
         .expect_err("removing an unregistered guardian should fail");
     assert_eq!(err, GUARDIAN_NOT_FOUND);
@@ -482,7 +482,7 @@ fn remove_guardian_fails_when_below_threshold() {
     add_guardian(&mut svm, program_id, &owner, vault, guardian_b);
     set_threshold(&mut svm, program_id, &owner, vault, 2);
 
-    const REMOVAL_BELOW_THRESHOLD: u32 = 6005;
+    const REMOVAL_BELOW_THRESHOLD: u32 = 6004;
     let err = remove_guardian(&mut svm, program_id, &owner, vault, guardian_a)
         .expect_err("removal that would drop below the threshold should fail");
     assert_eq!(err, REMOVAL_BELOW_THRESHOLD);
@@ -514,7 +514,7 @@ fn set_inactivity_window_fails_below_minimum() {
 
     let (mut svm, vault) = setup_vault(program_id, &owner);
 
-    const INACTIVITY_WINDOW_TOO_SHORT: u32 = 6006;
+    const INACTIVITY_WINDOW_TOO_SHORT: u32 = 6005;
     let err =
         set_inactivity_window_result(&mut svm, program_id, &owner, vault, MIN_INACTIVITY_WINDOW - 1)
             .expect_err("a window below the minimum should fail");
@@ -561,7 +561,7 @@ fn ping_fails_when_signer_is_not_owner() {
     let (mut svm, vault) = setup_vault(program_id, &owner);
     svm.airdrop(&intruder.pubkey(), 1_000_000_000).unwrap();
 
-    const UNAUTHORIZED: u32 = 6004;
+    const UNAUTHORIZED: u32 = 6003;
     let err = ping(&mut svm, program_id, &intruder, vault).expect_err("ping by non-owner should fail");
     assert_eq!(err, UNAUTHORIZED);
 }
@@ -575,7 +575,7 @@ fn initiate_recovery_fails_when_signer_is_not_a_guardian() {
     let (mut svm, vault) = setup_vault(program_id, &owner);
     svm.airdrop(&outsider.pubkey(), 1_000_000_000).unwrap();
 
-    const GUARDIAN_NOT_FOUND: u32 = 6003;
+    const GUARDIAN_NOT_FOUND: u32 = 6002;
     let err = initiate_recovery(&mut svm, program_id, &outsider, vault, Pubkey::new_unique())
         .expect_err("a non-guardian should not be able to initiate recovery");
     assert_eq!(err, GUARDIAN_NOT_FOUND);
@@ -591,7 +591,7 @@ fn initiate_recovery_fails_when_inactivity_window_not_elapsed() {
     svm.airdrop(&guardian.pubkey(), 1_000_000_000).unwrap();
     add_guardian(&mut svm, program_id, &owner, vault, guardian.pubkey());
 
-    const INACTIVITY_WINDOW_NOT_ELAPSED: u32 = 6011;
+    const INACTIVITY_WINDOW_NOT_ELAPSED: u32 = 6010;
     let err = initiate_recovery(&mut svm, program_id, &guardian, vault, Pubkey::new_unique())
         .expect_err("recovery should not be initiable before the inactivity window elapses");
     assert_eq!(err, INACTIVITY_WINDOW_NOT_ELAPSED);
@@ -604,7 +604,7 @@ fn cancel_recovery_fails_when_no_active_recovery() {
 
     let (mut svm, vault) = setup_vault(program_id, &owner);
 
-    const NO_ACTIVE_RECOVERY: u32 = 6010;
+    const NO_ACTIVE_RECOVERY: u32 = 6009;
     let err = cancel_recovery(&mut svm, program_id, &owner, vault)
         .expect_err("cancelling with no active recovery should fail");
     assert_eq!(err, NO_ACTIVE_RECOVERY);
@@ -620,7 +620,7 @@ fn approve_recovery_fails_when_no_active_recovery() {
     svm.airdrop(&guardian.pubkey(), 1_000_000_000).unwrap();
     add_guardian(&mut svm, program_id, &owner, vault, guardian.pubkey());
 
-    const NO_ACTIVE_RECOVERY: u32 = 6010;
+    const NO_ACTIVE_RECOVERY: u32 = 6009;
     let err = approve_recovery(&mut svm, program_id, &guardian, vault)
         .expect_err("approving with no active recovery should fail");
     assert_eq!(err, NO_ACTIVE_RECOVERY);
@@ -636,7 +636,7 @@ fn execute_rotation_fails_when_no_active_recovery() {
     svm.airdrop(&guardian.pubkey(), 1_000_000_000).unwrap();
     add_guardian(&mut svm, program_id, &owner, vault, guardian.pubkey());
 
-    const NO_ACTIVE_RECOVERY: u32 = 6010;
+    const NO_ACTIVE_RECOVERY: u32 = 6009;
     let err = execute_rotation(&mut svm, program_id, &guardian, vault)
         .expect_err("executing rotation with no active recovery should fail");
     assert_eq!(err, NO_ACTIVE_RECOVERY);
@@ -709,7 +709,7 @@ fn blocks_ping_while_recovery_is_active() {
     initiate_recovery(&mut svm, program_id, &guardians[0], vault, new_owner)
         .expect("initiate_recovery should succeed");
 
-    const BLOCKED_DURING_RECOVERY: u32 = 6015;
+    const BLOCKED_DURING_RECOVERY: u32 = 6014;
     let err = ping(&mut svm, program_id, &owner, vault).expect_err("ping should be blocked");
     assert_eq!(err, BLOCKED_DURING_RECOVERY);
 }
@@ -727,7 +727,7 @@ fn blocks_remove_guardian_while_recovery_is_active() {
     initiate_recovery(&mut svm, program_id, &guardians[0], vault, new_owner)
         .expect("initiate_recovery should succeed");
 
-    const BLOCKED_DURING_RECOVERY: u32 = 6015;
+    const BLOCKED_DURING_RECOVERY: u32 = 6014;
     let err = remove_guardian(&mut svm, program_id, &owner, vault, guardians[2].pubkey())
         .expect_err("remove_guardian should be blocked");
     assert_eq!(err, BLOCKED_DURING_RECOVERY);
@@ -746,7 +746,7 @@ fn fails_to_initiate_a_second_recovery_while_one_is_active() {
     initiate_recovery(&mut svm, program_id, &guardians[0], vault, new_owner)
         .expect("initiate_recovery should succeed");
 
-    const RECOVERY_ALREADY_ACTIVE: u32 = 6009;
+    const RECOVERY_ALREADY_ACTIVE: u32 = 6008;
     let err = initiate_recovery(
         &mut svm,
         program_id,
@@ -774,7 +774,7 @@ fn rejects_a_duplicate_approval_from_the_same_guardian() {
         .expect("first approval should succeed");
     svm.expire_blockhash();
 
-    const ALREADY_APPROVED: u32 = 6012;
+    const ALREADY_APPROVED: u32 = 6011;
     let err = approve_recovery(&mut svm, program_id, &guardians[0], vault)
         .expect_err("duplicate approval should fail");
     assert_eq!(err, ALREADY_APPROVED);
@@ -795,7 +795,7 @@ fn fails_to_execute_rotation_when_threshold_is_not_met() {
     approve_recovery(&mut svm, program_id, &guardians[0], vault)
         .expect("first approval should succeed");
 
-    const THRESHOLD_NOT_MET: u32 = 6014;
+    const THRESHOLD_NOT_MET: u32 = 6013;
     let err = execute_rotation(&mut svm, program_id, &guardians[2], vault)
         .expect_err("execute_rotation should fail without enough approvals");
     assert_eq!(err, THRESHOLD_NOT_MET);
@@ -817,7 +817,7 @@ fn approve_recovery_fails_after_expiry() {
     let state = get_vault(&svm, &vault);
     warp_clock_to(&mut svm, state.initiated_at + 604_800 + 1);
 
-    const RECOVERY_EXPIRED: u32 = 6013;
+    const RECOVERY_EXPIRED: u32 = 6012;
     let err = approve_recovery(&mut svm, program_id, &guardians[0], vault)
         .expect_err("approval after expiry should fail");
     assert_eq!(err, RECOVERY_EXPIRED);
@@ -843,7 +843,7 @@ fn execute_rotation_fails_after_expiry() {
     let state = get_vault(&svm, &vault);
     warp_clock_to(&mut svm, state.initiated_at + 604_800 + 1);
 
-    const RECOVERY_EXPIRED: u32 = 6013;
+    const RECOVERY_EXPIRED: u32 = 6012;
     let err = execute_rotation(&mut svm, program_id, &guardians[2], vault)
         .expect_err("rotation after expiry should fail even with threshold met");
     assert_eq!(err, RECOVERY_EXPIRED);
@@ -863,7 +863,7 @@ fn approve_recovery_fails_when_signer_is_not_a_guardian() {
     initiate_recovery(&mut svm, program_id, &guardians[0], vault, Pubkey::new_unique())
         .expect("initiate_recovery should succeed");
 
-    const GUARDIAN_NOT_FOUND: u32 = 6003;
+    const GUARDIAN_NOT_FOUND: u32 = 6002;
     let err = approve_recovery(&mut svm, program_id, &outsider, vault)
         .expect_err("non-guardian should not be able to approve");
     assert_eq!(err, GUARDIAN_NOT_FOUND);

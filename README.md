@@ -64,6 +64,13 @@ yarn test
 See [programs/aegis_program/README.md](programs/aegis_program/README.md) for details on the
 program's instructions, accounts, and test suite.
 
+## Deployment
+
+The Aegis program is deployed on Solana Devnet:
+
+- **Program ID:** `8zA1db5LJmFwUu7dTS1qA4ixqJ5XaTx224x1fRTRSJHA`
+- **Explorer:** [Program](https://explorer.solana.com/address/8zA1db5LJmFwUu7dTS1qA4ixqJ5XaTx224x1fRTRSJHA?cluster=devnet)
+
 ## Project structure
 
 ```

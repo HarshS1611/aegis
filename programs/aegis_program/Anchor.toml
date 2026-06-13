@@ -8,8 +8,11 @@ skip-lint = false
 [programs.localnet]
 aegis_program = "8zA1db5LJmFwUu7dTS1qA4ixqJ5XaTx224x1fRTRSJHA"
 
+[programs.devnet]
+aegis_program = "8zA1db5LJmFwUu7dTS1qA4ixqJ5XaTx224x1fRTRSJHA"
+
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [hooks]
