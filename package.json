@@ -1,0 +1,15 @@
+{
+  "name": "aegis",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter frontend dev",
+    "build": "pnpm --filter frontend build",
+    "lint": "pnpm --filter frontend lint",
+    "format": "pnpm --filter frontend format",
+    "typecheck": "pnpm --filter frontend typecheck",
+    "anchor:build": "cd programs/aegis_program && anchor build",
+    "anchor:test": "cd programs/aegis_program && yarn test",
+    "anchor:lint": "yarn --cwd programs/aegis_program lint"
+  }
+}

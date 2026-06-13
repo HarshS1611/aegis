@@ -1,0 +1,12 @@
+target/
+.anchor/
+node_modules/
+.next/
+build/
+dist/
+*.lock
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+target/idl/
+target/types/
