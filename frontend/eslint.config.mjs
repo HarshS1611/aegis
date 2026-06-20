@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Codama-generated client; do not lint generated code.
+    "lib/generated/**",
   ]),
 ]);
 

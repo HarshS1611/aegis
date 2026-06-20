@@ -1,0 +1,550 @@
+{
+  "address": "8zA1db5LJmFwUu7dTS1qA4ixqJ5XaTx224x1fRTRSJHA",
+  "metadata": {
+    "name": "aegis_program",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "add_guardian",
+      "docs": [
+        "Owner adds a guardian wallet address to the vault."
+      ],
+      "discriminator": [
+        167,
+        189,
+        170,
+        27,
+        74,
+        240,
+        201,
+        241
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "vault"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "guardian",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "approve_recovery",
+      "docs": [
+        "Guardian adds their approval to the active recovery."
+      ],
+      "discriminator": [
+        148,
+        96,
+        41,
+        38,
+        108,
+        189,
+        129,
+        214
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "guardian",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "cancel_recovery",
+      "docs": [
+        "Owner cancels an in-progress recovery."
+      ],
+      "discriminator": [
+        176,
+        23,
+        203,
+        37,
+        121,
+        251,
+        227,
+        83
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "vault"
+          ]
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "execute_rotation",
+      "docs": [
+        "Guardian executes the key rotation once threshold is met."
+      ],
+      "discriminator": [
+        38,
+        208,
+        21,
+        96,
+        80,
+        170,
+        5,
+        36
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "guardian",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_vault",
+      "docs": [
+        "Create a new vault PDA for the calling owner."
+      ],
+      "discriminator": [
+        48,
+        191,
+        163,
+        44,
+        71,
+        129,
+        63,
+        164
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initiate_recovery",
+      "docs": [
+        "Guardian initiates a recovery after the inactivity window has elapsed."
+      ],
+      "discriminator": [
+        132,
+        148,
+        60,
+        74,
+        49,
+        178,
+        235,
+        187
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "guardian",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "proposed_owner",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "ping",
+      "docs": [
+        "Owner pings the vault to prove liveness."
+      ],
+      "discriminator": [
+        173,
+        0,
+        94,
+        236,
+        73,
+        133,
+        225,
+        153
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "vault"
+          ]
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "remove_guardian",
+      "docs": [
+        "Owner removes a guardian wallet address from the vault."
+      ],
+      "discriminator": [
+        72,
+        117,
+        160,
+        244,
+        155,
+        185,
+        71,
+        18
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "vault"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "guardian",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "set_inactivity_window",
+      "docs": [
+        "Owner sets the inactivity window in seconds (min 86400)."
+      ],
+      "discriminator": [
+        29,
+        174,
+        203,
+        84,
+        16,
+        121,
+        125,
+        187
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "vault"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "seconds",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "set_threshold",
+      "docs": [
+        "Owner sets the approval threshold (M of N)."
+      ],
+      "discriminator": [
+        155,
+        53,
+        245,
+        104,
+        116,
+        169,
+        239,
+        167
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "vault"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "threshold",
+          "type": "u8"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Vault",
+      "discriminator": [
+        211,
+        8,
+        232,
+        43,
+        2,
+        152,
+        117,
+        119
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "DuplicateGuardian",
+      "msg": "Guardian is already registered in this vault."
+    },
+    {
+      "code": 6001,
+      "name": "MaxGuardiansReached",
+      "msg": "Guardian list has reached the maximum size."
+    },
+    {
+      "code": 6002,
+      "name": "GuardianNotFound",
+      "msg": "Guardian is not registered in this vault."
+    },
+    {
+      "code": 6003,
+      "name": "Unauthorized",
+      "msg": "Only the vault owner can perform this action."
+    },
+    {
+      "code": 6004,
+      "name": "RemovalBelowThreshold",
+      "msg": "Cannot remove guardian: would leave count below threshold."
+    },
+    {
+      "code": 6005,
+      "name": "InactivityWindowTooShort",
+      "msg": "Inactivity window is below the minimum allowed (86400 seconds)."
+    },
+    {
+      "code": 6006,
+      "name": "ThresholdExceedsGuardians",
+      "msg": "Threshold cannot exceed the number of registered guardians."
+    },
+    {
+      "code": 6007,
+      "name": "ThresholdTooLow",
+      "msg": "Threshold must be at least 1."
+    },
+    {
+      "code": 6008,
+      "name": "RecoveryAlreadyActive",
+      "msg": "Recovery is already in progress."
+    },
+    {
+      "code": 6009,
+      "name": "NoActiveRecovery",
+      "msg": "No recovery is currently in progress."
+    },
+    {
+      "code": 6010,
+      "name": "InactivityWindowNotElapsed",
+      "msg": "Inactivity window has not yet elapsed."
+    },
+    {
+      "code": 6011,
+      "name": "AlreadyApproved",
+      "msg": "Guardian has already approved this recovery."
+    },
+    {
+      "code": 6012,
+      "name": "RecoveryExpired",
+      "msg": "Recovery has expired (more than 7 days since initiation)."
+    },
+    {
+      "code": 6013,
+      "name": "ThresholdNotMet",
+      "msg": "Not enough guardian approvals to execute rotation."
+    },
+    {
+      "code": 6014,
+      "name": "BlockedDuringRecovery",
+      "msg": "This action is blocked while a recovery is in progress."
+    }
+  ],
+  "types": [
+    {
+      "name": "RecoveryState",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Idle"
+          },
+          {
+            "name": "RecoveryPending"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Vault",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "docs": [
+              "Current owner of the vault. Updated on successful rotation."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump seed."
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "guardians",
+            "docs": [
+              "Registered guardian addresses."
+            ],
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "threshold",
+            "docs": [
+              "Minimum guardian approvals required for rotation."
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "inactivity_window",
+            "docs": [
+              "Seconds before recovery can be triggered."
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "last_activity",
+            "docs": [
+              "Unix timestamp of last ping or vault initialisation."
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "recovery_state",
+            "docs": [
+              "Current recovery state."
+            ],
+            "type": {
+              "defined": {
+                "name": "RecoveryState"
+              }
+            }
+          },
+          {
+            "name": "proposed_owner",
+            "docs": [
+              "Proposed new owner address during recovery. None when Idle."
+            ],
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "approvals",
+            "docs": [
+              "Guardian addresses that have approved the current recovery."
+            ],
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "initiated_at",
+            "docs": [
+              "Unix timestamp when recovery was initiated. Used for 7-day expiry."
+            ],
+            "type": "i64"
+          }
+        ]
+      }
+    }
+  ],
+  "constants": [
+    {
+      "name": "SEED",
+      "type": "string",
+      "value": "\"anchor\""
+    }
+  ]
+}
