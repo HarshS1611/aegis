@@ -9,9 +9,6 @@
   "instructions": [
     {
       "name": "add_guardian",
-      "docs": [
-        "Owner adds a guardian wallet address to the vault."
-      ],
       "discriminator": [
         167,
         189,
@@ -44,9 +41,6 @@
     },
     {
       "name": "approve_recovery",
-      "docs": [
-        "Guardian adds their approval to the active recovery."
-      ],
       "discriminator": [
         148,
         96,
@@ -71,9 +65,6 @@
     },
     {
       "name": "cancel_recovery",
-      "docs": [
-        "Owner cancels an in-progress recovery."
-      ],
       "discriminator": [
         176,
         23,
@@ -100,10 +91,41 @@
       "args": []
     },
     {
-      "name": "execute_rotation",
-      "docs": [
-        "Guardian executes the key rotation once threshold is met."
+      "name": "deposit_sol",
+      "discriminator": [
+        108,
+        81,
+        78,
+        117,
+        125,
+        155,
+        56,
+        200
       ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "depositor",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "execute_rotation",
       "discriminator": [
         38,
         208,
@@ -128,9 +150,6 @@
     },
     {
       "name": "initialize_vault",
-      "docs": [
-        "Create a new vault PDA for the calling owner."
-      ],
       "discriminator": [
         48,
         191,
@@ -178,9 +197,6 @@
     },
     {
       "name": "initiate_recovery",
-      "docs": [
-        "Guardian initiates a recovery after the inactivity window has elapsed."
-      ],
       "discriminator": [
         132,
         148,
@@ -210,9 +226,6 @@
     },
     {
       "name": "ping",
-      "docs": [
-        "Owner pings the vault to prove liveness."
-      ],
       "discriminator": [
         173,
         0,
@@ -240,9 +253,6 @@
     },
     {
       "name": "remove_guardian",
-      "docs": [
-        "Owner removes a guardian wallet address from the vault."
-      ],
       "discriminator": [
         72,
         117,
@@ -275,9 +285,6 @@
     },
     {
       "name": "set_inactivity_window",
-      "docs": [
-        "Owner sets the inactivity window in seconds (min 86400)."
-      ],
       "discriminator": [
         29,
         174,
@@ -310,9 +317,6 @@
     },
     {
       "name": "set_threshold",
-      "docs": [
-        "Owner sets the approval threshold (M of N)."
-      ],
       "discriminator": [
         155,
         53,
@@ -340,6 +344,46 @@
         {
           "name": "threshold",
           "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "withdraw_sol",
+      "discriminator": [
+        145,
+        131,
+        74,
+        136,
+        65,
+        137,
+        42,
+        38
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "vault"
+          ]
+        },
+        {
+          "name": "destination",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
         }
       ]
     }
@@ -434,6 +478,11 @@
       "code": 6014,
       "name": "BlockedDuringRecovery",
       "msg": "This action is blocked while a recovery is in progress."
+    },
+    {
+      "code": 6015,
+      "name": "InsufficientVaultBalance",
+      "msg": "Withdrawal amount exceeds the vault's available (non-rent-exempt) balance."
     }
   ],
   "types": [
@@ -458,53 +507,32 @@
         "fields": [
           {
             "name": "owner",
-            "docs": [
-              "Current owner of the vault. Updated on successful rotation."
-            ],
             "type": "pubkey"
           },
           {
             "name": "bump",
-            "docs": [
-              "PDA bump seed."
-            ],
             "type": "u8"
           },
           {
             "name": "guardians",
-            "docs": [
-              "Registered guardian addresses."
-            ],
             "type": {
               "vec": "pubkey"
             }
           },
           {
             "name": "threshold",
-            "docs": [
-              "Minimum guardian approvals required for rotation."
-            ],
             "type": "u8"
           },
           {
             "name": "inactivity_window",
-            "docs": [
-              "Seconds before recovery can be triggered."
-            ],
             "type": "i64"
           },
           {
             "name": "last_activity",
-            "docs": [
-              "Unix timestamp of last ping or vault initialisation."
-            ],
             "type": "i64"
           },
           {
             "name": "recovery_state",
-            "docs": [
-              "Current recovery state."
-            ],
             "type": {
               "defined": {
                 "name": "RecoveryState"
@@ -513,28 +541,23 @@
           },
           {
             "name": "proposed_owner",
-            "docs": [
-              "Proposed new owner address during recovery. None when Idle."
-            ],
             "type": {
               "option": "pubkey"
             }
           },
           {
             "name": "approvals",
-            "docs": [
-              "Guardian addresses that have approved the current recovery."
-            ],
             "type": {
               "vec": "pubkey"
             }
           },
           {
             "name": "initiated_at",
-            "docs": [
-              "Unix timestamp when recovery was initiated. Used for 7-day expiry."
-            ],
             "type": "i64"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
           }
         ]
       }

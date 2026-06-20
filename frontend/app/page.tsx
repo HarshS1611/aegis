@@ -39,9 +39,9 @@ const steps = [
   },
   {
     icon: Clock,
-    title: "2. Stay active",
+    title: "2. Fund and stay active",
     description:
-      "Periodic ping calls reset the inactivity clock. Guardians have zero power while the owner is active.",
+      "Deposit SOL into the vault and ping periodically to reset the inactivity clock. Guardians have zero power while the owner is active.",
   },
   {
     icon: ShieldQuestion,
@@ -53,7 +53,7 @@ const steps = [
     icon: Zap,
     title: "4. Atomic rotation",
     description:
-      "Once threshold approvals are collected, the final approval and rotation can land atomically via a Jito bundle.",
+      "Once threshold approvals are collected, the final approval and rotation can land atomically via a Jito bundle. The new owner can then withdraw the vault's funds.",
   },
 ]
 
@@ -62,9 +62,10 @@ const personas = [
     value: "owner",
     label: "Vault owner",
     description:
-      "Full control at all times. Funds never move — only the owner key can change.",
+      "Full control at all times. Deposits, withdrawals, and guardian changes all require the owner key.",
     actions: [
       "Create a vault and set guardians, threshold, and inactivity window",
+      "Deposit SOL into the vault and withdraw it any time",
       "Ping periodically to prove you're still active",
       "Cancel any in-progress recovery instantly, no questions asked",
       "Add or remove guardians whenever you're not in active recovery",
@@ -74,7 +75,7 @@ const personas = [
     value: "guardian",
     label: "Guardian",
     description:
-      "Trusted by the owner. Cannot access funds, only help rotate the owner key after inactivity.",
+      "Trusted by the owner. Cannot deposit, withdraw, or view vault funds, only help rotate the owner key after inactivity.",
     actions: [
       "Read vault status to see if the inactivity window has elapsed",
       "Initiate recovery with a proposed new owner address",
@@ -85,7 +86,8 @@ const personas = [
 ]
 
 const securityPoints = [
-  "Guardians can never move, spend, or view vault funds — only rotate the owner key.",
+  "Guardians can never deposit, withdraw, or view vault funds — only rotate the owner key.",
+  "Rotating ownership hands control of the vault's existing SOL balance to the new owner, with no separate transfer step.",
   "The owner can cancel any active recovery at any time, no matter how many approvals exist.",
   "Recovery only activates after a configurable inactivity window (minimum 1 day).",
   "M-of-N guardian approval required — no single guardian can act alone.",
@@ -100,18 +102,19 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="grid gap-6 pt-12 text-center">
         <Badge variant="secondary" className="mx-auto">
-          Devnet — Turbin3 Capstone POC
+          Live on Solana Devnet
         </Badge>
         <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
           Social recovery for your Solana wallet, without a custodian
         </h1>
         <p className="text-muted-foreground mx-auto max-w-2xl text-lg">
           Aegis lets you register guardians on-chain, set an inactivity
-          window, and let a threshold of guardians rotate your wallet&apos;s
-          ownership key if you ever lose access — fully non-custodial, with
-          optional atomic execution via Jito.
+          window, and let a threshold of guardians rotate your vault&apos;s
+          ownership key if you ever lose access. The vault holds SOL in
+          custody, so recovery restores control of real funds, not just an
+          authority record — with optional atomic execution via Jito.
         </p>
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Button size="lg" asChild>
             <Link href="/app">
               Launch app <ArrowRight className="size-4" />
@@ -198,26 +201,42 @@ export default function LandingPage() {
             Two on-chain states. The owner can always cancel.
           </p>
         </div>
-        <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-center gap-3">
-          <Badge className="px-4 py-2 text-sm">Idle</Badge>
-          <ArrowRight className="text-muted-foreground size-4" />
-          <Badge variant="destructive" className="px-4 py-2 text-sm">
+        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-2 sm:gap-3">
+          <Badge className="px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm">
+            Idle
+          </Badge>
+          <ArrowRight className="text-muted-foreground size-4 shrink-0" />
+          <Badge
+            variant="destructive"
+            className="px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm"
+          >
             Recovery pending
           </Badge>
-          <ArrowRight className="text-muted-foreground size-4" />
-          <Badge variant="secondary" className="px-4 py-2 text-sm">
+          <ArrowRight className="text-muted-foreground size-4 shrink-0" />
+          <Badge
+            variant="secondary"
+            className="px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm"
+          >
             Rotated
           </Badge>
-          <span className="text-muted-foreground text-sm">or</span>
-          <Badge variant="outline" className="px-4 py-2 text-sm">
+          <span className="text-muted-foreground text-xs sm:text-sm">or</span>
+          <Badge
+            variant="outline"
+            className="px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm"
+          >
             Cancelled
           </Badge>
-          <span className="text-muted-foreground text-sm">or</span>
-          <Badge variant="outline" className="px-4 py-2 text-sm">
+          <span className="text-muted-foreground text-xs sm:text-sm">or</span>
+          <Badge
+            variant="outline"
+            className="px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm"
+          >
             Expired (7 days)
           </Badge>
-          <ArrowRight className="text-muted-foreground size-4" />
-          <Badge className="px-4 py-2 text-sm">Idle</Badge>
+          <ArrowRight className="text-muted-foreground size-4 shrink-0" />
+          <Badge className="px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm">
+            Idle
+          </Badge>
         </div>
       </section>
 
@@ -251,15 +270,17 @@ export default function LandingPage() {
           </CardHeader>
           <CardContent>
             <ol className="grid gap-2 text-sm">
-              <li className="flex items-center gap-2">
+              <li className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">1</Badge> Final{" "}
-                <code>approve_recovery</code> (reaches threshold)
+                <code className="break-all">approve_recovery</code> (reaches
+                threshold)
               </li>
-              <li className="flex items-center gap-2">
+              <li className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">2</Badge>{" "}
-                <code>execute_rotation</code> (updates owner)
+                <code className="break-all">execute_rotation</code> (updates
+                owner)
               </li>
-              <li className="flex items-center gap-2">
+              <li className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">3</Badge> Tip instruction (priority
                 inclusion)
               </li>
@@ -295,7 +316,7 @@ export default function LandingPage() {
             </Link>
           </Button>
         </div>
-        <p className="text-muted-foreground text-xs">
+        <p className="text-muted-foreground mx-auto max-w-md px-4 text-xs break-all">
           Program ID:{" "}
           <a
             href={explorerAddressUrl(AEGIS_PROGRAM_PROGRAM_ADDRESS)}
@@ -313,7 +334,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="flex flex-col items-center gap-2 text-center">
         <p className="text-muted-foreground text-sm">
-          Aegis — Turbin3 Builders Program Q2 2026 Capstone
+          Aegis — Non-custodial social recovery for Solana wallets
         </p>
         <a
           href={GITHUB_URL}

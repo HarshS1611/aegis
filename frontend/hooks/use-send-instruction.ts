@@ -4,7 +4,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 import type { Instruction, TransactionSendingSigner } from "@solana/kit"
 
-import { sendInstructions } from "@/lib/solana/vault"
+import { sendInstructions, waitForConfirmation } from "@/lib/solana/vault"
 import { sendInstructionsAsJitoBundle } from "@/lib/solana/jito"
 import { addTransactionLogEntry } from "@/lib/transaction-log"
 
@@ -30,6 +30,7 @@ export function useSendInstruction(
             signer,
             instructions
           )
+          await waitForConfirmation(signature)
           toast.success("Jito bundle submitted")
           addTransactionLogEntry({
             label: "Jito bundle",

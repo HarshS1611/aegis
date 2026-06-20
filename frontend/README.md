@@ -5,7 +5,10 @@
 Next.js + shadcn/ui frontend for **Aegis**, a social-recovery vault program on Solana (devnet).
 The vault owner can register guardians, set an approval threshold and an
 inactivity window. If the owner goes inactive, guardians can collectively
-approve a recovery and rotate ownership to a new key.
+approve a recovery and rotate ownership to a new key. The vault PDA also
+holds SOL in custody — the owner can deposit and withdraw at any time, and
+whoever the rotation makes the new owner can withdraw the same funds, so
+recovery actually restores access to something.
 
 ## Stack
 
@@ -114,12 +117,21 @@ codama.mjs                   # codegen entrypoint (`pnpm codegen`)
   Solana Explorer (devnet).
 - **UI**:
   - `InitializeVaultCard` — shown if the connected wallet has no vault yet.
-  - `VaultOverview` — owner, threshold, guardians, inactivity window, last
-    activity, and recovery status.
-  - `OwnerPanel` — ping (reset inactivity), cancel recovery, add/remove
-    guardian, set threshold, set inactivity window.
+  - `VaultOverview` — owner, vault SOL balance, threshold, guardians,
+    inactivity window, last activity, and recovery status.
+  - `OwnerPanel` — ping (reset inactivity), cancel recovery, deposit/withdraw
+    SOL, add/remove guardian, set threshold, set inactivity window.
   - `GuardianPanel` — initiate recovery, approve recovery, execute rotation,
     optionally as an atomic Jito bundle.
+- **SOL custody**: the vault PDA is also a System-owned-lamports holder.
+  `deposit_sol` accepts a transfer from anyone into the vault (plain System
+  Program CPI). `withdraw_sol` is owner-gated and moves lamports out via
+  direct lamport manipulation (a PDA can't be debited through a System
+  Program `transfer` CPI since it isn't System-owned — only the owning
+  program can move its lamports directly), capped so the vault never drops
+  below rent-exemption. After a rotation, the new `owner` can withdraw the
+  same balance — see `withdraw_sol_succeeds_for_new_owner_after_rotation` in
+  the program's test suite.
 - **Jito bundles (optional)**: when a guardian's approval reaches the
   threshold (or once threshold is met), `GuardianPanel` offers a
   "Submit as atomic Jito bundle" toggle. When enabled,
@@ -151,6 +163,16 @@ With a Devnet wallet extension installed and funded:
 2. Click **Connect Wallet** and approve the connection (set the wallet to Devnet).
 3. If no vault exists yet for your wallet, click **Initialize Vault**.
 4. As the owner, add guardian addresses, set a threshold and inactivity window.
-5. From a guardian's wallet, initiate/approve recovery and execute rotation
+5. Deposit some devnet SOL into the vault from the **Deposit SOL** field in
+   `OwnerPanel`, and confirm the balance updates in `VaultOverview`.
+6. From a guardian's wallet, initiate/approve recovery and execute rotation
    once the threshold is met. Toggle "Submit as atomic Jito bundle" to try
    the bundled approve + execute + tip path (expect a fallback toast on devnet).
+7. Reconnect as the new owner (the guardian who was rotated in) and withdraw
+   the deposited SOL from the **Withdraw SOL** field — confirming that
+   recovery actually restores control of the vault's funds.
+
+> Note: the on-chain account layout changed when SOL custody was added
+> (a new `creator` field). Any vault initialized before that upgrade is no
+> longer readable by the current program — call **Initialize Vault** again
+> to create a fresh one.

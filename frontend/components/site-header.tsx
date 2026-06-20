@@ -7,17 +7,17 @@ import { GITHUB_URL } from "@/lib/constants"
 
 export function SiteHeader({ showLaunch = true }: { showLaunch?: boolean }) {
   return (
-    <header className="flex items-center justify-between">
-      <Link href="/" className="flex items-center gap-2">
-        <ShieldCheck className="size-6" />
-        <div>
+    <header className="flex flex-wrap items-center justify-between gap-3">
+      <Link href="/" className="flex min-w-0 items-center gap-2">
+        <ShieldCheck className="size-6 shrink-0" />
+        <div className="min-w-0">
           <p className="text-xl font-semibold leading-none">Aegis</p>
-          <p className="text-muted-foreground text-xs">
+          <p className="text-muted-foreground truncate text-xs">
             Social-recovery vault on Solana
           </p>
         </div>
       </Link>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {showLaunch && (
           <Button variant="outline" asChild>
             <Link href="/app">Launch app</Link>

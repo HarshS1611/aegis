@@ -29,6 +29,12 @@ function formatTimestamp(seconds: bigint) {
   return new Date(Number(seconds) * 1000).toLocaleString()
 }
 
+function formatSol(lamports: bigint) {
+  return (Number(lamports) / 1_000_000_000).toLocaleString(undefined, {
+    maximumFractionDigits: 9,
+  })
+}
+
 function AddressLink({ address }: { address: string }) {
   return (
     <a
@@ -70,6 +76,10 @@ export function VaultOverview({
           <div className="min-w-0 sm:col-span-2">
             <p className="text-muted-foreground">Owner</p>
             <AddressLink address={data.owner} />
+          </div>
+          <div className="min-w-0 sm:col-span-2">
+            <p className="text-muted-foreground">Vault balance</p>
+            <p>{formatSol(vault.lamports)} SOL</p>
           </div>
           <div className="min-w-0">
             <p className="text-muted-foreground">Threshold</p>

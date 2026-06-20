@@ -294,6 +294,50 @@ fn ping(svm: &mut LiteSVM, program_id: Pubkey, owner: &Keypair, vault: Pubkey) -
     send_tx(svm, owner, ix)
 }
 
+fn deposit_sol(
+    svm: &mut LiteSVM,
+    program_id: Pubkey,
+    depositor: &Keypair,
+    vault: Pubkey,
+    amount: u64,
+) -> Result<(), u32> {
+    let ix = Instruction::new_with_bytes(
+        program_id,
+        &aegis_program::instruction::DepositSol { amount }.data(),
+        aegis_program::accounts::DepositSol {
+            vault,
+            depositor: depositor.pubkey(),
+            system_program: anchor_lang::solana_program::system_program::ID,
+        }
+        .to_account_metas(None),
+    );
+
+    send_tx(svm, depositor, ix)
+}
+
+fn withdraw_sol(
+    svm: &mut LiteSVM,
+    program_id: Pubkey,
+    owner: &Keypair,
+    vault: Pubkey,
+    destination: Pubkey,
+    amount: u64,
+) -> Result<(), u32> {
+    let ix = Instruction::new_with_bytes(
+        program_id,
+        &aegis_program::instruction::WithdrawSol { amount }.data(),
+        aegis_program::accounts::WithdrawSol {
+            vault,
+            owner: owner.pubkey(),
+            destination,
+            system_program: anchor_lang::solana_program::system_program::ID,
+        }
+        .to_account_metas(None),
+    );
+
+    send_tx(svm, owner, ix)
+}
+
 fn remove_guardian(
     svm: &mut LiteSVM,
     program_id: Pubkey,
@@ -867,4 +911,111 @@ fn approve_recovery_fails_when_signer_is_not_a_guardian() {
     let err = approve_recovery(&mut svm, program_id, &outsider, vault)
         .expect_err("non-guardian should not be able to approve");
     assert_eq!(err, GUARDIAN_NOT_FOUND);
+}
+#[test]
+fn deposit_sol_increases_vault_balance() {
+    let program_id = aegis_program::id();
+    let owner = Keypair::new();
+
+    let (mut svm, vault) = setup_vault(program_id, &owner);
+    let before = svm.get_account(&vault).unwrap().lamports;
+
+    deposit_sol(&mut svm, program_id, &owner, vault, 500_000_000)
+        .expect("deposit_sol should succeed");
+
+    let after = svm.get_account(&vault).unwrap().lamports;
+    assert_eq!(after, before + 500_000_000);
+}
+
+#[test]
+fn withdraw_sol_sends_lamports_to_destination_when_signed_by_owner() {
+    let program_id = aegis_program::id();
+    let owner = Keypair::new();
+    let destination = Pubkey::new_unique();
+
+    let (mut svm, vault) = setup_vault(program_id, &owner);
+    deposit_sol(&mut svm, program_id, &owner, vault, 500_000_000)
+        .expect("deposit_sol should succeed");
+
+    withdraw_sol(&mut svm, program_id, &owner, vault, destination, 200_000_000)
+        .expect("withdraw_sol should succeed");
+
+    assert_eq!(
+        svm.get_account(&destination).unwrap().lamports,
+        200_000_000
+    );
+}
+
+#[test]
+fn withdraw_sol_fails_when_signer_is_not_owner() {
+    let program_id = aegis_program::id();
+    let owner = Keypair::new();
+    let outsider = Keypair::new();
+    let destination = Pubkey::new_unique();
+
+    let (mut svm, vault) = setup_vault(program_id, &owner);
+    svm.airdrop(&outsider.pubkey(), 1_000_000_000).unwrap();
+    deposit_sol(&mut svm, program_id, &owner, vault, 500_000_000)
+        .expect("deposit_sol should succeed");
+
+    const UNAUTHORIZED: u32 = 6003;
+    let err = withdraw_sol(&mut svm, program_id, &outsider, vault, destination, 100_000_000)
+        .expect_err("non-owner should not be able to withdraw");
+    assert_eq!(err, UNAUTHORIZED);
+}
+
+#[test]
+fn withdraw_sol_fails_when_exceeding_available_balance() {
+    let program_id = aegis_program::id();
+    let owner = Keypair::new();
+    let destination = Pubkey::new_unique();
+
+    let (mut svm, vault) = setup_vault(program_id, &owner);
+    deposit_sol(&mut svm, program_id, &owner, vault, 500_000_000)
+        .expect("deposit_sol should succeed");
+
+    const INSUFFICIENT_VAULT_BALANCE: u32 = 6015;
+    let err = withdraw_sol(
+        &mut svm,
+        program_id,
+        &owner,
+        vault,
+        destination,
+        600_000_000,
+    )
+    .expect_err("withdrawal above available balance should fail");
+    assert_eq!(err, INSUFFICIENT_VAULT_BALANCE);
+}
+
+#[test]
+fn withdraw_sol_succeeds_for_new_owner_after_rotation() {
+    let program_id = aegis_program::id();
+    let owner = Keypair::new();
+    let new_owner = Keypair::new();
+    let destination = Pubkey::new_unique();
+    let guardians = [Keypair::new(), Keypair::new()];
+
+    let mut svm = new_svm(program_id, &owner);
+    let vault = setup_vault_for_recovery(&mut svm, program_id, &owner, &guardians, 2);
+    deposit_sol(&mut svm, program_id, &owner, vault, 500_000_000)
+        .expect("deposit_sol should succeed");
+
+    initiate_recovery(&mut svm, program_id, &guardians[0], vault, new_owner.pubkey())
+        .expect("initiate_recovery should succeed");
+    approve_recovery(&mut svm, program_id, &guardians[0], vault)
+        .expect("first approval should succeed");
+    approve_recovery(&mut svm, program_id, &guardians[1], vault)
+        .expect("second approval should succeed");
+    execute_rotation(&mut svm, program_id, &guardians[0], vault)
+        .expect("execute_rotation should succeed");
+
+    svm.airdrop(&new_owner.pubkey(), 1_000_000_000).unwrap();
+
+    withdraw_sol(&mut svm, program_id, &new_owner, vault, destination, 200_000_000)
+        .expect("new owner should be able to withdraw after rotation");
+
+    assert_eq!(
+        svm.get_account(&destination).unwrap().lamports,
+        200_000_000
+    );
 }

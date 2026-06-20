@@ -13,58 +13,18 @@ export const VAULT_DISCRIMINATOR: ReadonlyUint8Array = new Uint8Array([211, 8, 2
 
 export function getVaultDiscriminatorBytes(): ReadonlyUint8Array { return fixEncoderSize(getBytesEncoder(), 8).encode(VAULT_DISCRIMINATOR); }
 
-export type Vault = { discriminator: ReadonlyUint8Array; 
-/** Current owner of the vault. Updated on successful rotation. */
-owner: Address; 
-/** PDA bump seed. */
-bump: number; 
-/** Registered guardian addresses. */
-guardians: Array<Address>; 
-/** Minimum guardian approvals required for rotation. */
-threshold: number; 
-/** Seconds before recovery can be triggered. */
-inactivityWindow: bigint; 
-/** Unix timestamp of last ping or vault initialisation. */
-lastActivity: bigint; 
-/** Current recovery state. */
-recoveryState: RecoveryState; 
-/** Proposed new owner address during recovery. None when Idle. */
-proposedOwner: Option<Address>; 
-/** Guardian addresses that have approved the current recovery. */
-approvals: Array<Address>; 
-/** Unix timestamp when recovery was initiated. Used for 7-day expiry. */
-initiatedAt: bigint;  };
+export type Vault = { discriminator: ReadonlyUint8Array; owner: Address; bump: number; guardians: Array<Address>; threshold: number; inactivityWindow: bigint; lastActivity: bigint; recoveryState: RecoveryState; proposedOwner: Option<Address>; approvals: Array<Address>; initiatedAt: bigint; creator: Address;  };
 
-export type VaultArgs = { 
-/** Current owner of the vault. Updated on successful rotation. */
-owner: Address; 
-/** PDA bump seed. */
-bump: number; 
-/** Registered guardian addresses. */
-guardians: Array<Address>; 
-/** Minimum guardian approvals required for rotation. */
-threshold: number; 
-/** Seconds before recovery can be triggered. */
-inactivityWindow: number | bigint; 
-/** Unix timestamp of last ping or vault initialisation. */
-lastActivity: number | bigint; 
-/** Current recovery state. */
-recoveryState: RecoveryStateArgs; 
-/** Proposed new owner address during recovery. None when Idle. */
-proposedOwner: OptionOrNullable<Address>; 
-/** Guardian addresses that have approved the current recovery. */
-approvals: Array<Address>; 
-/** Unix timestamp when recovery was initiated. Used for 7-day expiry. */
-initiatedAt: number | bigint;  };
+export type VaultArgs = { owner: Address; bump: number; guardians: Array<Address>; threshold: number; inactivityWindow: number | bigint; lastActivity: number | bigint; recoveryState: RecoveryStateArgs; proposedOwner: OptionOrNullable<Address>; approvals: Array<Address>; initiatedAt: number | bigint; creator: Address;  };
 
 /** Gets the encoder for {@link VaultArgs} account data. */
 export function getVaultEncoder(): Encoder<VaultArgs> {
-    return transformEncoder(getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)], ['owner', getAddressEncoder()], ['bump', getU8Encoder()], ['guardians', getArrayEncoder(getAddressEncoder())], ['threshold', getU8Encoder()], ['inactivityWindow', getI64Encoder()], ['lastActivity', getI64Encoder()], ['recoveryState', getRecoveryStateEncoder()], ['proposedOwner', getOptionEncoder(getAddressEncoder())], ['approvals', getArrayEncoder(getAddressEncoder())], ['initiatedAt', getI64Encoder()]]), (value) => ({ ...value, discriminator: VAULT_DISCRIMINATOR }));
+    return transformEncoder(getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)], ['owner', getAddressEncoder()], ['bump', getU8Encoder()], ['guardians', getArrayEncoder(getAddressEncoder())], ['threshold', getU8Encoder()], ['inactivityWindow', getI64Encoder()], ['lastActivity', getI64Encoder()], ['recoveryState', getRecoveryStateEncoder()], ['proposedOwner', getOptionEncoder(getAddressEncoder())], ['approvals', getArrayEncoder(getAddressEncoder())], ['initiatedAt', getI64Encoder()], ['creator', getAddressEncoder()]]), (value) => ({ ...value, discriminator: VAULT_DISCRIMINATOR }));
 }
 
 /** Gets the decoder for {@link Vault} account data. */
 export function getVaultDecoder(): Decoder<Vault> {
-    return getStructDecoder([['discriminator', fixDecoderSize(getBytesDecoder(), 8)], ['owner', getAddressDecoder()], ['bump', getU8Decoder()], ['guardians', getArrayDecoder(getAddressDecoder())], ['threshold', getU8Decoder()], ['inactivityWindow', getI64Decoder()], ['lastActivity', getI64Decoder()], ['recoveryState', getRecoveryStateDecoder()], ['proposedOwner', getOptionDecoder(getAddressDecoder())], ['approvals', getArrayDecoder(getAddressDecoder())], ['initiatedAt', getI64Decoder()]]);
+    return getStructDecoder([['discriminator', fixDecoderSize(getBytesDecoder(), 8)], ['owner', getAddressDecoder()], ['bump', getU8Decoder()], ['guardians', getArrayDecoder(getAddressDecoder())], ['threshold', getU8Decoder()], ['inactivityWindow', getI64Decoder()], ['lastActivity', getI64Decoder()], ['recoveryState', getRecoveryStateDecoder()], ['proposedOwner', getOptionDecoder(getAddressDecoder())], ['approvals', getArrayDecoder(getAddressDecoder())], ['initiatedAt', getI64Decoder()], ['creator', getAddressDecoder()]]);
 }
 
 /** Gets the codec for {@link Vault} account data. */

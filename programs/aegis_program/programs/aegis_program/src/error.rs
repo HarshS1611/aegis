@@ -47,4 +47,7 @@ pub enum ErrorCode {
 
     #[msg("This action is blocked while a recovery is in progress.")]
     BlockedDuringRecovery,
+
+    #[msg("Withdrawal amount exceeds the vault's available (non-rent-exempt) balance.")]
+    InsufficientVaultBalance,
 }

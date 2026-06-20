@@ -26,12 +26,22 @@ import {
   RecoveryState,
   getAddGuardianInstruction,
   getCancelRecoveryInstruction,
+  getDepositSolInstruction,
   getPingInstruction,
   getRemoveGuardianInstruction,
   getSetInactivityWindowInstruction,
   getSetThresholdInstruction,
+  getWithdrawSolInstruction,
   type Vault,
 } from "@/lib/generated"
+
+const LAMPORTS_PER_SOL = 1_000_000_000
+
+function parseSolAmount(value: string): bigint | null {
+  const sol = Number(value)
+  if (!Number.isFinite(sol) || sol <= 0) return null
+  return BigInt(Math.round(sol * LAMPORTS_PER_SOL))
+}
 
 function parseAddress(value: string): Address | null {
   const trimmed = value.trim()
@@ -52,6 +62,8 @@ export function OwnerPanel({
   const owner = signer as unknown as TransactionSigner
   const { send, isPending } = useSendInstruction(signer, onSuccess)
 
+  const [depositInput, setDepositInput] = useState("")
+  const [withdrawInput, setWithdrawInput] = useState("")
   const [guardianInput, setGuardianInput] = useState("")
   const [removeGuardianInput, setRemoveGuardianInput] = useState("")
   const [threshold, setThreshold] = useState(String(vault.threshold))
@@ -93,6 +105,84 @@ export function OwnerPanel({
               Cancel recovery
             </Button>
           )}
+        </div>
+
+        <Separator />
+
+        <div className="grid gap-2">
+          <Label htmlFor="deposit-sol">Deposit SOL</Label>
+          <div className="flex gap-2">
+            <Input
+              id="deposit-sol"
+              type="number"
+              min={0}
+              step="0.001"
+              placeholder="Amount in SOL"
+              value={depositInput}
+              onChange={(e) => setDepositInput(e.target.value)}
+            />
+            <Button
+              variant="outline"
+              disabled={isPending}
+              onClick={async () => {
+                const amount = parseSolAmount(depositInput)
+                if (!amount) {
+                  toast.error("Enter a valid amount")
+                  return
+                }
+                await send([
+                  getDepositSolInstruction({
+                    vault: vaultAddress,
+                    depositor: owner,
+                    amount,
+                  }),
+                ])
+                setDepositInput("")
+              }}
+            >
+              Deposit
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="withdraw-sol">Withdraw SOL</Label>
+          <div className="flex gap-2">
+            <Input
+              id="withdraw-sol"
+              type="number"
+              min={0}
+              step="0.001"
+              placeholder="Amount in SOL"
+              value={withdrawInput}
+              onChange={(e) => setWithdrawInput(e.target.value)}
+            />
+            <Button
+              variant="outline"
+              disabled={isPending}
+              onClick={async () => {
+                const amount = parseSolAmount(withdrawInput)
+                if (!amount) {
+                  toast.error("Enter a valid amount")
+                  return
+                }
+                await send([
+                  getWithdrawSolInstruction({
+                    vault: vaultAddress,
+                    owner,
+                    destination: owner.address,
+                    amount,
+                  }),
+                ])
+                setWithdrawInput("")
+              }}
+            >
+              Withdraw
+            </Button>
+          </div>
+          <p className="text-muted-foreground text-xs">
+            Withdraws to your connected wallet address.
+          </p>
         </div>
 
         <Separator />

@@ -25,6 +25,7 @@ pub(crate) fn handler(ctx: Context<InitializeVault>) -> Result<()> {
     let clock = Clock::get()?;
 
     vault.owner = ctx.accounts.owner.key();
+    vault.creator = ctx.accounts.owner.key();
     vault.bump = ctx.bumps.vault;
     vault.guardians = Vec::new();
     vault.threshold = 1;

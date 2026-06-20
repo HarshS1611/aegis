@@ -9,6 +9,7 @@
 export * from './addGuardian';
 export * from './approveRecovery';
 export * from './cancelRecovery';
+export * from './depositSol';
 export * from './executeRotation';
 export * from './initializeVault';
 export * from './initiateRecovery';
@@ -16,3 +17,4 @@ export * from './ping';
 export * from './removeGuardian';
 export * from './setInactivityWindow';
 export * from './setThreshold';
+export * from './withdrawSol';

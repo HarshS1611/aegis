@@ -1,6 +1,7 @@
 pub mod add_guardian;
 pub mod approve_recovery;
 pub mod cancel_recovery;
+pub mod deposit_sol;
 pub mod execute_rotation;
 pub mod initialize_vault;
 pub mod initiate_recovery;
@@ -8,10 +9,12 @@ pub mod ping;
 pub mod remove_guardian;
 pub mod set_inactivity_window;
 pub mod set_threshold;
+pub mod withdraw_sol;
 
 pub use add_guardian::*;
 pub use approve_recovery::*;
 pub use cancel_recovery::*;
+pub use deposit_sol::*;
 pub use execute_rotation::*;
 pub use initialize_vault::*;
 pub use initiate_recovery::*;
@@ -19,3 +22,4 @@ pub use ping::*;
 pub use remove_guardian::*;
 pub use set_inactivity_window::*;
 pub use set_threshold::*;
+pub use withdraw_sol::*;

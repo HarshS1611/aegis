@@ -1,8 +1,10 @@
 # Aegis Program
 
-A non-custodial key recovery protocol built with Anchor. A wallet owner registers a set of
+A social-recovery vault built with Anchor. A wallet owner registers a set of
 guardians and an M-of-N approval threshold. If the owner goes inactive for longer than a
-configurable window, guardians can collectively rotate the vault to a new owner.
+configurable window, guardians can collectively rotate the vault to a new owner. The vault PDA
+also holds SOL in custody, so a successful rotation hands the new owner control over the same
+funds, not just an updated authority record.
 
 ## Accounts
 
@@ -22,6 +24,12 @@ Seeds: `["vault", owner_pubkey]`
 | `proposed_owner` | `Option<Pubkey>` | New owner proposed during an active recovery. |
 | `approvals` | `Vec<Pubkey>` | Guardians who approved the current recovery. |
 | `initiated_at` | `i64` | Unix timestamp when the current recovery was initiated. |
+| `creator` | `Pubkey` | Address that originally called `initialize_vault`. Immutable. The PDA's seeds are derived from this address, not the current `owner`, so it's kept around to re-derive signing seeds for PDA-authorized SOL transfers after a rotation. |
+
+The vault PDA itself holds lamports — deposits via `deposit_sol` increase its balance directly,
+and `withdraw_sol` debits it. Since the account is owned by this program (not the System
+Program), withdrawals move lamports with direct lamport-field manipulation rather than a System
+Program `transfer` CPI (which only accepts System-owned source accounts).
 
 ## Constants
 
@@ -45,6 +53,8 @@ Seeds: `["vault", owner_pubkey]`
 | `approve_recovery` | guardian | Adds the caller's approval to the active recovery. |
 | `cancel_recovery` | owner | Cancels an active recovery and resets state. |
 | `execute_rotation` | guardian | Rotates `owner` to `proposed_owner` once the threshold is met. |
+| `deposit_sol(amount)` | anyone | Transfers `amount` lamports into the vault PDA via a System Program CPI. |
+| `withdraw_sol(amount)` | owner | Transfers `amount` lamports out of the vault PDA to `destination`. Capped so the vault never drops below rent-exemption. |
 
 ## Errors
 
@@ -65,6 +75,7 @@ Seeds: `["vault", owner_pubkey]`
 | `RecoveryExpired` | `approve_recovery`, `execute_rotation` if `now - initiated_at > RECOVERY_EXPIRY`. |
 | `ThresholdNotMet` | `execute_rotation` if `approvals.len() < threshold`. |
 | `BlockedDuringRecovery` | `ping`, `remove_guardian` while `recovery_state == RecoveryPending`. |
+| `InsufficientVaultBalance` | `withdraw_sol` if `amount` exceeds the vault's balance above rent-exemption. |
 
 ## Environment
 
@@ -99,8 +110,10 @@ yarn test
 
 Tests live in `programs/aegis_program/tests/test_aegis.rs` and cover every instruction's happy
 path plus all error conditions, including the full guardian recovery flow (initiate → approve →
-execute), owner cancellation, recovery expiry, and guard conditions like
-`BlockedDuringRecovery` and `RecoveryAlreadyActive`.
+execute), owner cancellation, recovery expiry, guard conditions like
+`BlockedDuringRecovery` and `RecoveryAlreadyActive`, and SOL custody — including
+`withdraw_sol_succeeds_for_new_owner_after_rotation`, which deposits SOL, runs a full guardian
+rotation, and confirms the new owner can withdraw the same funds.
 
 ## Deploying to Devnet
 

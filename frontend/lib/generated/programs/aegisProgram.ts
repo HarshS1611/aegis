@@ -9,7 +9,7 @@
 import { assertIsInstructionWithAccounts, containsBytes, extendClient, fixEncoderSize, getBytesEncoder, SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT, SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION, SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE, SolanaError, type Address, type ClientWithRpc, type ClientWithTransactionPlanning, type ClientWithTransactionSending, type GetAccountInfoApi, type GetMultipleAccountsApi, type Instruction, type InstructionWithData, type ReadonlyUint8Array } from '@solana/kit';
 import { addSelfFetchFunctions, addSelfPlanAndSendFunctions, type SelfFetchFunctions, type SelfPlanAndSendFunctions } from '@solana/program-client-core';
 import { getVaultCodec, type Vault, type VaultArgs } from '../accounts';
-import { getAddGuardianInstruction, getApproveRecoveryInstruction, getCancelRecoveryInstruction, getExecuteRotationInstruction, getInitializeVaultInstructionAsync, getInitiateRecoveryInstruction, getPingInstruction, getRemoveGuardianInstruction, getSetInactivityWindowInstruction, getSetThresholdInstruction, parseAddGuardianInstruction, parseApproveRecoveryInstruction, parseCancelRecoveryInstruction, parseExecuteRotationInstruction, parseInitializeVaultInstruction, parseInitiateRecoveryInstruction, parsePingInstruction, parseRemoveGuardianInstruction, parseSetInactivityWindowInstruction, parseSetThresholdInstruction, type AddGuardianInput, type ApproveRecoveryInput, type CancelRecoveryInput, type ExecuteRotationInput, type InitializeVaultAsyncInput, type InitiateRecoveryInput, type ParsedAddGuardianInstruction, type ParsedApproveRecoveryInstruction, type ParsedCancelRecoveryInstruction, type ParsedExecuteRotationInstruction, type ParsedInitializeVaultInstruction, type ParsedInitiateRecoveryInstruction, type ParsedPingInstruction, type ParsedRemoveGuardianInstruction, type ParsedSetInactivityWindowInstruction, type ParsedSetThresholdInstruction, type PingInput, type RemoveGuardianInput, type SetInactivityWindowInput, type SetThresholdInput } from '../instructions';
+import { getAddGuardianInstruction, getApproveRecoveryInstruction, getCancelRecoveryInstruction, getDepositSolInstruction, getExecuteRotationInstruction, getInitializeVaultInstructionAsync, getInitiateRecoveryInstruction, getPingInstruction, getRemoveGuardianInstruction, getSetInactivityWindowInstruction, getSetThresholdInstruction, getWithdrawSolInstruction, parseAddGuardianInstruction, parseApproveRecoveryInstruction, parseCancelRecoveryInstruction, parseDepositSolInstruction, parseExecuteRotationInstruction, parseInitializeVaultInstruction, parseInitiateRecoveryInstruction, parsePingInstruction, parseRemoveGuardianInstruction, parseSetInactivityWindowInstruction, parseSetThresholdInstruction, parseWithdrawSolInstruction, type AddGuardianInput, type ApproveRecoveryInput, type CancelRecoveryInput, type DepositSolInput, type ExecuteRotationInput, type InitializeVaultAsyncInput, type InitiateRecoveryInput, type ParsedAddGuardianInstruction, type ParsedApproveRecoveryInstruction, type ParsedCancelRecoveryInstruction, type ParsedDepositSolInstruction, type ParsedExecuteRotationInstruction, type ParsedInitializeVaultInstruction, type ParsedInitiateRecoveryInstruction, type ParsedPingInstruction, type ParsedRemoveGuardianInstruction, type ParsedSetInactivityWindowInstruction, type ParsedSetThresholdInstruction, type ParsedWithdrawSolInstruction, type PingInput, type RemoveGuardianInput, type SetInactivityWindowInput, type SetThresholdInput, type WithdrawSolInput } from '../instructions';
 import { findVaultPda } from '../pdas';
 
 export const AEGIS_PROGRAM_PROGRAM_ADDRESS = '8zA1db5LJmFwUu7dTS1qA4ixqJ5XaTx224x1fRTRSJHA' as Address<'8zA1db5LJmFwUu7dTS1qA4ixqJ5XaTx224x1fRTRSJHA'>;
@@ -22,13 +22,14 @@ export function identifyAegisProgramAccount(account: { data: ReadonlyUint8Array 
     throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT, { accountData: data, programName: "aegisProgram" });
 }
 
-export enum AegisProgramInstruction { AddGuardian, ApproveRecovery, CancelRecovery, ExecuteRotation, InitializeVault, InitiateRecovery, Ping, RemoveGuardian, SetInactivityWindow, SetThreshold }
+export enum AegisProgramInstruction { AddGuardian, ApproveRecovery, CancelRecovery, DepositSol, ExecuteRotation, InitializeVault, InitiateRecovery, Ping, RemoveGuardian, SetInactivityWindow, SetThreshold, WithdrawSol }
 
 export function identifyAegisProgramInstruction(instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array): AegisProgramInstruction {
     const data = 'data' in instruction ? instruction.data : instruction;
     if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 8).encode(new Uint8Array([167, 189, 170, 27, 74, 240, 201, 241])), 0)) { return AegisProgramInstruction.AddGuardian; }
 if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 8).encode(new Uint8Array([148, 96, 41, 38, 108, 189, 129, 214])), 0)) { return AegisProgramInstruction.ApproveRecovery; }
 if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 8).encode(new Uint8Array([176, 23, 203, 37, 121, 251, 227, 83])), 0)) { return AegisProgramInstruction.CancelRecovery; }
+if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 8).encode(new Uint8Array([108, 81, 78, 117, 125, 155, 56, 200])), 0)) { return AegisProgramInstruction.DepositSol; }
 if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 8).encode(new Uint8Array([38, 208, 21, 96, 80, 170, 5, 36])), 0)) { return AegisProgramInstruction.ExecuteRotation; }
 if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 8).encode(new Uint8Array([48, 191, 163, 44, 71, 129, 63, 164])), 0)) { return AegisProgramInstruction.InitializeVault; }
 if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 8).encode(new Uint8Array([132, 148, 60, 74, 49, 178, 235, 187])), 0)) { return AegisProgramInstruction.InitiateRecovery; }
@@ -36,6 +37,7 @@ if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 8).encode(new Uint8Arr
 if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 8).encode(new Uint8Array([72, 117, 160, 244, 155, 185, 71, 18])), 0)) { return AegisProgramInstruction.RemoveGuardian; }
 if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 8).encode(new Uint8Array([29, 174, 203, 84, 16, 121, 125, 187])), 0)) { return AegisProgramInstruction.SetInactivityWindow; }
 if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 8).encode(new Uint8Array([155, 53, 245, 104, 116, 169, 239, 167])), 0)) { return AegisProgramInstruction.SetThreshold; }
+if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 8).encode(new Uint8Array([145, 131, 74, 136, 65, 137, 42, 38])), 0)) { return AegisProgramInstruction.WithdrawSol; }
     throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION, { instructionData: data, programName: "aegisProgram" });
 }
 
@@ -43,6 +45,7 @@ export type ParsedAegisProgramInstruction<TProgram extends string = '8zA1db5LJmF
 | { instructionType: AegisProgramInstruction.AddGuardian } & ParsedAddGuardianInstruction<TProgram>
 | { instructionType: AegisProgramInstruction.ApproveRecovery } & ParsedApproveRecoveryInstruction<TProgram>
 | { instructionType: AegisProgramInstruction.CancelRecovery } & ParsedCancelRecoveryInstruction<TProgram>
+| { instructionType: AegisProgramInstruction.DepositSol } & ParsedDepositSolInstruction<TProgram>
 | { instructionType: AegisProgramInstruction.ExecuteRotation } & ParsedExecuteRotationInstruction<TProgram>
 | { instructionType: AegisProgramInstruction.InitializeVault } & ParsedInitializeVaultInstruction<TProgram>
 | { instructionType: AegisProgramInstruction.InitiateRecovery } & ParsedInitiateRecoveryInstruction<TProgram>
@@ -50,6 +53,7 @@ export type ParsedAegisProgramInstruction<TProgram extends string = '8zA1db5LJmF
 | { instructionType: AegisProgramInstruction.RemoveGuardian } & ParsedRemoveGuardianInstruction<TProgram>
 | { instructionType: AegisProgramInstruction.SetInactivityWindow } & ParsedSetInactivityWindowInstruction<TProgram>
 | { instructionType: AegisProgramInstruction.SetThreshold } & ParsedSetThresholdInstruction<TProgram>
+| { instructionType: AegisProgramInstruction.WithdrawSol } & ParsedWithdrawSolInstruction<TProgram>
 
 
         export function parseAegisProgramInstruction<TProgram extends string>(
@@ -64,6 +68,8 @@ case AegisProgramInstruction.ApproveRecovery: { assertIsInstructionWithAccounts(
 return { instructionType: AegisProgramInstruction.ApproveRecovery, ...parseApproveRecoveryInstruction(instruction) }; }
 case AegisProgramInstruction.CancelRecovery: { assertIsInstructionWithAccounts(instruction);
 return { instructionType: AegisProgramInstruction.CancelRecovery, ...parseCancelRecoveryInstruction(instruction) }; }
+case AegisProgramInstruction.DepositSol: { assertIsInstructionWithAccounts(instruction);
+return { instructionType: AegisProgramInstruction.DepositSol, ...parseDepositSolInstruction(instruction) }; }
 case AegisProgramInstruction.ExecuteRotation: { assertIsInstructionWithAccounts(instruction);
 return { instructionType: AegisProgramInstruction.ExecuteRotation, ...parseExecuteRotationInstruction(instruction) }; }
 case AegisProgramInstruction.InitializeVault: { assertIsInstructionWithAccounts(instruction);
@@ -78,6 +84,8 @@ case AegisProgramInstruction.SetInactivityWindow: { assertIsInstructionWithAccou
 return { instructionType: AegisProgramInstruction.SetInactivityWindow, ...parseSetInactivityWindowInstruction(instruction) }; }
 case AegisProgramInstruction.SetThreshold: { assertIsInstructionWithAccounts(instruction);
 return { instructionType: AegisProgramInstruction.SetThreshold, ...parseSetThresholdInstruction(instruction) }; }
+case AegisProgramInstruction.WithdrawSol: { assertIsInstructionWithAccounts(instruction);
+return { instructionType: AegisProgramInstruction.WithdrawSol, ...parseWithdrawSolInstruction(instruction) }; }
                 default: throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE, { instructionType: instructionType as string, programName: "aegisProgram" });
             }
         }
@@ -86,7 +94,7 @@ export type AegisProgramPlugin = { accounts: AegisProgramPluginAccounts; instruc
 
 export type AegisProgramPluginAccounts = { vault: ReturnType<typeof getVaultCodec> & SelfFetchFunctions<VaultArgs, Vault>; }
 
-export type AegisProgramPluginInstructions = { addGuardian: (input: AddGuardianInput) => ReturnType<typeof getAddGuardianInstruction> & SelfPlanAndSendFunctions; approveRecovery: (input: ApproveRecoveryInput) => ReturnType<typeof getApproveRecoveryInstruction> & SelfPlanAndSendFunctions; cancelRecovery: (input: CancelRecoveryInput) => ReturnType<typeof getCancelRecoveryInstruction> & SelfPlanAndSendFunctions; executeRotation: (input: ExecuteRotationInput) => ReturnType<typeof getExecuteRotationInstruction> & SelfPlanAndSendFunctions; initializeVault: (input: InitializeVaultAsyncInput) => ReturnType<typeof getInitializeVaultInstructionAsync> & SelfPlanAndSendFunctions; initiateRecovery: (input: InitiateRecoveryInput) => ReturnType<typeof getInitiateRecoveryInstruction> & SelfPlanAndSendFunctions; ping: (input: PingInput) => ReturnType<typeof getPingInstruction> & SelfPlanAndSendFunctions; removeGuardian: (input: RemoveGuardianInput) => ReturnType<typeof getRemoveGuardianInstruction> & SelfPlanAndSendFunctions; setInactivityWindow: (input: SetInactivityWindowInput) => ReturnType<typeof getSetInactivityWindowInstruction> & SelfPlanAndSendFunctions; setThreshold: (input: SetThresholdInput) => ReturnType<typeof getSetThresholdInstruction> & SelfPlanAndSendFunctions; }
+export type AegisProgramPluginInstructions = { addGuardian: (input: AddGuardianInput) => ReturnType<typeof getAddGuardianInstruction> & SelfPlanAndSendFunctions; approveRecovery: (input: ApproveRecoveryInput) => ReturnType<typeof getApproveRecoveryInstruction> & SelfPlanAndSendFunctions; cancelRecovery: (input: CancelRecoveryInput) => ReturnType<typeof getCancelRecoveryInstruction> & SelfPlanAndSendFunctions; depositSol: (input: DepositSolInput) => ReturnType<typeof getDepositSolInstruction> & SelfPlanAndSendFunctions; executeRotation: (input: ExecuteRotationInput) => ReturnType<typeof getExecuteRotationInstruction> & SelfPlanAndSendFunctions; initializeVault: (input: InitializeVaultAsyncInput) => ReturnType<typeof getInitializeVaultInstructionAsync> & SelfPlanAndSendFunctions; initiateRecovery: (input: InitiateRecoveryInput) => ReturnType<typeof getInitiateRecoveryInstruction> & SelfPlanAndSendFunctions; ping: (input: PingInput) => ReturnType<typeof getPingInstruction> & SelfPlanAndSendFunctions; removeGuardian: (input: RemoveGuardianInput) => ReturnType<typeof getRemoveGuardianInstruction> & SelfPlanAndSendFunctions; setInactivityWindow: (input: SetInactivityWindowInput) => ReturnType<typeof getSetInactivityWindowInstruction> & SelfPlanAndSendFunctions; setThreshold: (input: SetThresholdInput) => ReturnType<typeof getSetThresholdInstruction> & SelfPlanAndSendFunctions; withdrawSol: (input: WithdrawSolInput) => ReturnType<typeof getWithdrawSolInstruction> & SelfPlanAndSendFunctions; }
 
 export type AegisProgramPluginPdas = { vault: typeof findVaultPda; }
 
@@ -94,6 +102,6 @@ export type AegisProgramPluginRequirements = ClientWithRpc<GetAccountInfoApi & G
 
 export function aegisProgramProgram() {
     return <T extends AegisProgramPluginRequirements>(client: T): Omit<T, "aegisProgram"> & { aegisProgram: AegisProgramPlugin } => {
-        return extendClient(client, { aegisProgram: <AegisProgramPlugin>{ accounts: { vault: addSelfFetchFunctions(client, getVaultCodec()) }, instructions: { addGuardian: input => addSelfPlanAndSendFunctions(client, getAddGuardianInstruction(input)), approveRecovery: input => addSelfPlanAndSendFunctions(client, getApproveRecoveryInstruction(input)), cancelRecovery: input => addSelfPlanAndSendFunctions(client, getCancelRecoveryInstruction(input)), executeRotation: input => addSelfPlanAndSendFunctions(client, getExecuteRotationInstruction(input)), initializeVault: input => addSelfPlanAndSendFunctions(client, getInitializeVaultInstructionAsync(input)), initiateRecovery: input => addSelfPlanAndSendFunctions(client, getInitiateRecoveryInstruction(input)), ping: input => addSelfPlanAndSendFunctions(client, getPingInstruction(input)), removeGuardian: input => addSelfPlanAndSendFunctions(client, getRemoveGuardianInstruction(input)), setInactivityWindow: input => addSelfPlanAndSendFunctions(client, getSetInactivityWindowInstruction(input)), setThreshold: input => addSelfPlanAndSendFunctions(client, getSetThresholdInstruction(input)) }, pdas: { vault: findVaultPda } } });
+        return extendClient(client, { aegisProgram: <AegisProgramPlugin>{ accounts: { vault: addSelfFetchFunctions(client, getVaultCodec()) }, instructions: { addGuardian: input => addSelfPlanAndSendFunctions(client, getAddGuardianInstruction(input)), approveRecovery: input => addSelfPlanAndSendFunctions(client, getApproveRecoveryInstruction(input)), cancelRecovery: input => addSelfPlanAndSendFunctions(client, getCancelRecoveryInstruction(input)), depositSol: input => addSelfPlanAndSendFunctions(client, getDepositSolInstruction(input)), executeRotation: input => addSelfPlanAndSendFunctions(client, getExecuteRotationInstruction(input)), initializeVault: input => addSelfPlanAndSendFunctions(client, getInitializeVaultInstructionAsync(input)), initiateRecovery: input => addSelfPlanAndSendFunctions(client, getInitiateRecoveryInstruction(input)), ping: input => addSelfPlanAndSendFunctions(client, getPingInstruction(input)), removeGuardian: input => addSelfPlanAndSendFunctions(client, getRemoveGuardianInstruction(input)), setInactivityWindow: input => addSelfPlanAndSendFunctions(client, getSetInactivityWindowInstruction(input)), setThreshold: input => addSelfPlanAndSendFunctions(client, getSetThresholdInstruction(input)), withdrawSol: input => addSelfPlanAndSendFunctions(client, getWithdrawSolInstruction(input)) }, pdas: { vault: findVaultPda } } });
     };
 }

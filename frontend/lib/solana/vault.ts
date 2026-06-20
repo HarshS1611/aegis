@@ -11,6 +11,7 @@ import {
   setTransactionMessageFeePayerSigner,
   setTransactionMessageLifetimeUsingBlockhash,
   signAndSendTransactionMessageWithSigners,
+  signature,
   getBase58Decoder,
   getBase64Encoder,
   type Instruction,
@@ -77,11 +78,57 @@ export async function findVaultsByGuardian(
   return matches
 }
 
+function isRateLimitError(error: unknown): boolean {
+  return error instanceof Error && /429/.test(error.message)
+}
+
+async function withRetry<T>(fn: () => Promise<T>, maxAttempts = 5): Promise<T> {
+  let lastError: unknown
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      return await fn()
+    } catch (error) {
+      lastError = error
+      if (!isRateLimitError(error) || attempt === maxAttempts - 1) throw error
+      await new Promise((resolve) =>
+        setTimeout(resolve, 500 * Math.pow(2, attempt))
+      )
+    }
+  }
+  throw lastError
+}
+
+export async function waitForConfirmation(txSignature: string): Promise<void> {
+  for (let attempt = 0; attempt < 60; attempt++) {
+    const { value } = await withRetry(() =>
+      rpc
+        .getSignatureStatuses([signature(txSignature)], {
+          searchTransactionHistory: true,
+        })
+        .send()
+    )
+    const status = value[0]
+    if (status?.err) {
+      throw new Error(`Transaction failed: ${JSON.stringify(status.err)}`)
+    }
+    if (
+      status?.confirmationStatus === "confirmed" ||
+      status?.confirmationStatus === "finalized"
+    ) {
+      return
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500))
+  }
+  throw new Error("Timed out waiting for transaction confirmation")
+}
+
 export async function sendInstructions(
   signer: TransactionSendingSigner,
   instructions: Instruction[]
 ): Promise<string> {
-  const { value: latestBlockhash } = await rpc.getLatestBlockhash().send()
+  const { value: latestBlockhash } = await withRetry(() =>
+    rpc.getLatestBlockhash().send()
+  )
 
   const message = pipe(
     createTransactionMessage({ version: 0 }),
@@ -91,5 +138,7 @@ export async function sendInstructions(
   )
 
   const signatureBytes = await signAndSendTransactionMessageWithSigners(message)
-  return getBase58Decoder().decode(signatureBytes) as string
+  const signature = getBase58Decoder().decode(signatureBytes) as string
+  await waitForConfirmation(signature)
+  return signature
 }
