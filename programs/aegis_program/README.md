@@ -106,7 +106,7 @@ or simply:
 ```bash
 yarn test
 ```
-<img width="2572" height="1748" alt="image" src="https://github.com/user-attachments/assets/19f7fcd6-bf27-45dc-a836-2b375da4871f" />
+<img width="1800" height="1654" alt="image" src="https://github.com/user-attachments/assets/d0c0a1d9-d8eb-47ad-bf1a-6cd206c03099" />
 
 Tests live in `programs/aegis_program/tests/test_aegis.rs` and cover every instruction's happy
 path plus all error conditions, including the full guardian recovery flow (initiate → approve →
