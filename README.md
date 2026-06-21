@@ -1,6 +1,45 @@
 # Aegis
 
+> Live app: [aegis-protocol-dusky.vercel.app](https://aegis-protocol-dusky.vercel.app/)
+
 Monorepo containing the Aegis Anchor program (`programs/aegis_program`) and the Next.js frontend (`frontend`).
+
+## Architecture
+
+```mermaid
+flowchart TD
+    Owner["Owner wallet"]
+    Guardian1["Guardian wallet"]
+    Guardian2["Guardian wallet"]
+    Frontend["Next.js frontend\n(solana/kit + Wallet Standard)"]
+    Program["Aegis Anchor program"]
+    Vault["Vault PDA\n(guardians, threshold,\ninactivity window, SOL custody)"]
+    Jito["Jito Block Engine\n(optional atomic bundle)"]
+
+    Owner -->|connect, sign| Frontend
+    Guardian1 -->|connect, sign| Frontend
+    Guardian2 -->|connect, sign| Frontend
+
+    Frontend -->|initialize_vault, ping,\ndeposit_sol, withdraw_sol,\nadd/remove_guardian| Program
+    Frontend -->|initiate_recovery,\napprove_recovery,\nexecute_rotation| Program
+    Frontend -.->|optional: bundle final\napprove + execute + tip| Jito
+    Jito -.->|submit bundle| Program
+
+    Program -->|reads/writes| Vault
+```
+
+The Vault PDA is derived from the creating wallet's address and stores guardians, the
+approval threshold, the inactivity window, and recovery state, and also holds SOL directly
+(deposits/withdrawals move lamports in/out of this same account). Rotating ownership only
+ever updates the `owner` field on this account; guardians never gain direct access to the
+funds themselves.
+
+## Documentation
+
+- [Frontend README](frontend/README.md): stack, setup, environment variables, project
+  structure, and how the dashboard maps to on-chain instructions.
+- [Program README](programs/aegis_program/README.md): account layout, every instruction and
+  error code, and how to build/test/deploy the Anchor program.
 
 ## Prerequisites
 
@@ -66,8 +105,9 @@ program's instructions, accounts, and test suite.
 
 ## Deployment
 
-The Aegis program is deployed on Solana Devnet:
+The Aegis program is deployed on Solana Devnet, and the frontend is live on Vercel:
 
+- **Live app:** [aegis-protocol-dusky.vercel.app](https://aegis-protocol-dusky.vercel.app/)
 - **Program ID:** `8zA1db5LJmFwUu7dTS1qA4ixqJ5XaTx224x1fRTRSJHA`
 - **Explorer:** [Program](https://explorer.solana.com/address/8zA1db5LJmFwUu7dTS1qA4ixqJ5XaTx224x1fRTRSJHA?cluster=devnet)
 
