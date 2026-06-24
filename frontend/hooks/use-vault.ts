@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import type { Account, Address, MaybeAccount } from "@solana/kit"
 
 import type { Vault } from "@/lib/generated"
-import { fetchVaultAccount, findVaultsByGuardian } from "@/lib/solana/vault"
+import { fetchVaultAccount, findRelatedVaults } from "@/lib/solana/vault"
 
 export type VaultState = {
   vaultAddress: Address | null
@@ -54,27 +54,31 @@ export type GuardianVaultsState = {
   refetch: () => Promise<void>
 }
 
-/** Finds vaults (other than `owner`'s own) where `owner` is registered as a guardian. */
-export function useGuardianVaults(guardian: Address | undefined): GuardianVaultsState {
+/**
+ * Finds vaults (other than `address`'s own PDA) where `address` is either
+ * the current owner (e.g. rotated in via recovery, with no PDA of their
+ * own) or a registered guardian.
+ */
+export function useGuardianVaults(address: Address | undefined): GuardianVaultsState {
   const [vaults, setVaults] = useState<Account<Vault>[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const refetch = useCallback(async () => {
-    if (!guardian) {
+    if (!address) {
       setVaults([])
       return
     }
     setIsLoading(true)
     setError(null)
     try {
-      setVaults(await findVaultsByGuardian(guardian))
+      setVaults(await findRelatedVaults(address))
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch guardian vaults")
+      setError(err instanceof Error ? err.message : "Failed to fetch related vaults")
     } finally {
       setIsLoading(false)
     }
-  }, [guardian])
+  }, [address])
 
   useEffect(() => {
     const timeoutId = setTimeout(() => void refetch(), 0)

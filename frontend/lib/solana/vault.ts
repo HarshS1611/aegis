@@ -38,10 +38,7 @@ export async function fetchVaultAccount(owner: Address) {
   return { vaultAddress: vault, account }
 }
 
-/** Finds vaults that list `guardian` as one of their guardians. */
-export async function findVaultsByGuardian(
-  guardian: Address
-): Promise<Account<Vault>[]> {
+async function fetchAllVaultAccounts(): Promise<Account<Vault>[]> {
   const accounts = await rpc
     .getProgramAccounts(AEGIS_PROGRAM_PROGRAM_ADDRESS, {
       encoding: "base64",
@@ -60,22 +57,50 @@ export async function findVaultsByGuardian(
     .send()
 
   const decoder = getVaultDecoder()
-  const matches: Account<Vault>[] = []
-  for (const { pubkey, account } of accounts) {
+  return accounts.map(({ pubkey, account }) => {
     const data = getBase64Encoder().encode(account.data[0])
     const vault = decoder.decode(data)
-    if (vault.guardians.includes(guardian)) {
-      matches.push({
-        address: pubkey,
-        data: vault,
-        executable: account.executable,
-        lamports: account.lamports,
-        programAddress: AEGIS_PROGRAM_PROGRAM_ADDRESS,
-        space: BigInt(data.length),
-      })
+    return {
+      address: pubkey,
+      data: vault,
+      executable: account.executable,
+      lamports: account.lamports,
+      programAddress: AEGIS_PROGRAM_PROGRAM_ADDRESS,
+      space: BigInt(data.length),
     }
-  }
-  return matches
+  })
+}
+
+/** Finds vaults that list `guardian` as one of their guardians. */
+export async function findVaultsByGuardian(
+  guardian: Address
+): Promise<Account<Vault>[]> {
+  const accounts = await fetchAllVaultAccounts()
+  return accounts.filter((account) => account.data.guardians.includes(guardian))
+}
+
+/**
+ * Finds vaults whose current `owner` is `address`. Needed because a wallet
+ * can become owner via guardian rotation without ever calling
+ * `initialize_vault` (so it has no PDA of its own) and without being listed
+ * as a guardian (so the guardian lookup won't find it either).
+ */
+export async function findVaultsByOwner(
+  address: Address
+): Promise<Account<Vault>[]> {
+  const accounts = await fetchAllVaultAccounts()
+  return accounts.filter((account) => account.data.owner === address)
+}
+
+/** Finds all vaults related to `address` as either owner or guardian. */
+export async function findRelatedVaults(
+  address: Address
+): Promise<Account<Vault>[]> {
+  const accounts = await fetchAllVaultAccounts()
+  return accounts.filter(
+    (account) =>
+      account.data.owner === address || account.data.guardians.includes(address)
+  )
 }
 
 function isRateLimitError(error: unknown): boolean {
